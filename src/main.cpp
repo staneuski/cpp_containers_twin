@@ -128,24 +128,38 @@ public:
 
     /* ----------------------------- Iterators ----------------------------- */
 
-    [[nodiscard]] inline Iterator begin() noexcept {
-        return Iterator(head_.next_node);
+    [[nodiscard]] inline Iterator before_begin() noexcept {
+        return Iterator(&head_);
     }
 
-    [[nodiscard]] inline Iterator end() noexcept {
-        return Iterator(nullptr);
+    [[nodiscard]] ConstIterator before_begin() const noexcept {
+        return cbefore_begin;
+    }
+
+    [[nodiscard]] ConstIterator cbefore_begin() const noexcept {
+        return ConstIterator(const_cast<Node*>(&head_));
+    }
+
+
+    [[nodiscard]] inline Iterator begin() noexcept {
+        return Iterator(head_.next_node);
     }
 
     [[nodiscard]] inline ConstIterator begin() const noexcept {
         return cbegin();
     }
 
-    [[nodiscard]] inline ConstIterator end() const noexcept {
-        return cend();
-    }
-
     [[nodiscard]] inline ConstIterator cbegin() const noexcept {
         return ConstIterator(head_.next_node);
+    }
+
+
+    [[nodiscard]] inline Iterator end() noexcept {
+        return Iterator(nullptr);
+    }
+
+    [[nodiscard]] inline ConstIterator end() const noexcept {
+        return cend();
     }
 
     [[nodiscard]] inline ConstIterator cend() const noexcept {
