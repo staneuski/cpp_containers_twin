@@ -186,9 +186,7 @@ public:
 
     Iterator InsertAfter(ConstIterator pos, const Type& value) {
         if (!pos.node_)
-            throw std::out_of_range(
-                "out of interval `[before_begin(), end())` --> end()"
-            );
+            throw std::invalid_argument("pos argument points to nullptr");
 
         pos.node_->next_node = new Node(value, pos.node_->next_node);
         ++size_;
