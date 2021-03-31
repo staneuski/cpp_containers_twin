@@ -180,11 +180,8 @@ public:
         ++size_;
     }
 
-    void PushBack(const Type& value) {
-        Iterator back_it = begin();
-        for (size_t i = 1u; i < size_; ++i)
-            ++back_it;
-        InsertAfter(back_it, value);
+    inline void PushBack(const Type& value) {
+        InsertAfter(++GetPositionBeforeBack(), value);
     }
 
     Iterator InsertAfter(ConstIterator pos, const Type& value) {
@@ -208,6 +205,10 @@ public:
         }
     }
 
+    inline void PopBack() {
+        EraseAfter(GetPositionBeforeBack());
+    }
+
     Iterator EraseAfter(ConstIterator pos) noexcept {
         if (!pos.node_)
             return Iterator{pos.node_};
@@ -228,6 +229,13 @@ public:
 private:
     Node head_ = Node();
     size_t size_ = 0;
+
+    Iterator GetPositionBeforeBack() {
+        Iterator before_back = before_begin();
+        for (size_t i = 1u; i < size_; ++i)
+            ++before_back;
+        return before_back;
+    } 
 };
 
 template <typename Type>
@@ -290,6 +298,21 @@ void Test4() {
     };
 
     // Проверка PopFront
+    {
+        SingleLinkedList<int> numbers{3, 14, 15, 92, 6};
+        numbers.PopFront();
+        assert((numbers == SingleLinkedList<int>{14, 15, 92, 6}));
+
+        SingleLinkedList<DeletionSpy> list;
+        list.PushFront(DeletionSpy{});
+        int deletion_counter = 0;
+        list.begin()->deletion_counter_ptr = &deletion_counter;
+        assert(deletion_counter == 0);
+        list.PopFront();
+        assert(deletion_counter == 1);
+    }
+
+    // Проверка PopBack
     {
         SingleLinkedList<int> numbers{3, 14, 15, 92, 6};
         numbers.PopFront();
