@@ -313,15 +313,15 @@ void Test4() {
     // Проверка PopBack
     {
         SingleLinkedList<int> numbers{3, 14, 15, 92, 6};
-        numbers.PopFront();
-        assert((numbers == SingleLinkedList<int>{14, 15, 92, 6}));
+        numbers.PopBack();
+        assert((numbers == SingleLinkedList<int>{3, 14, 15, 92}));
 
         SingleLinkedList<DeletionSpy> list;
         list.PushFront(DeletionSpy{});
         int deletion_counter = 0;
         list.begin()->deletion_counter_ptr = &deletion_counter;
         assert(deletion_counter == 0);
-        list.PopFront();
+        list.PopBack();
         assert(deletion_counter == 1);
     }
 
