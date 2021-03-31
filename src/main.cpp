@@ -89,7 +89,6 @@ public:
     using Iterator = BasicIterator<Type>;
     using ConstIterator = BasicIterator<const Type>;
 
-
     /* --------------------- Constructors & Destructor --------------------- */
 
     SingleLinkedList() = default;
@@ -103,7 +102,6 @@ public:
     ~SingleLinkedList() {
         Clear();
     }
-
 
     /* -------------- Copy constructor & assignation operator -------------- */
 
@@ -122,7 +120,6 @@ public:
         }
         return *this;
     }
-
 
     /* ----------------------------- Iterators ----------------------------- */
 
@@ -151,7 +148,6 @@ public:
         return ConstIterator{head_.next_node};
     }
 
-
     [[nodiscard]] inline Iterator end() noexcept {
         return Iterator{nullptr};
     }
@@ -163,7 +159,6 @@ public:
     [[nodiscard]] inline ConstIterator cend() const noexcept {
         return ConstIterator{nullptr};
     }
-
 
     /* -------------------------- List's methods --------------------------- */
 
@@ -177,7 +172,7 @@ public:
     }
 
     [[nodiscard]] inline bool IsEmpty() const noexcept {
-        return !size_;
+        return !(head_.next_node && size_);
     }
 
     void PushFront(const Type& value) {
@@ -193,7 +188,7 @@ public:
     }
 
     Iterator InsertAfter(ConstIterator pos, const Type& value) {
-        if (size_ && pos == end())
+        if (!pos.node_)
             throw std::out_of_range(
                 "out of interval `[before_begin(), end())` --> end()"
             );
@@ -204,7 +199,7 @@ public:
     }
 
     void PopFront() noexcept {
-        if (size_ && head_.next_node) {
+        if (!IsEmpty()) {
             Node* next_node = head_.next_node->next_node;
             delete head_.next_node;
 
@@ -214,8 +209,8 @@ public:
     }
 
     Iterator EraseAfter(ConstIterator pos) noexcept {
-        if (!size_)
-            return end();
+        if (!pos.node_)
+            return Iterator{pos.node_};
 
         Node* to_erase = pos.node_->next_node;
         pos.node_->next_node = to_erase->next_node;
