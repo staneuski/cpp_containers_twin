@@ -89,7 +89,6 @@ public:
     using Iterator = BasicIterator<Type>;
     using ConstIterator = BasicIterator<const Type>;
 
-
     /* --------------------- Constructors & Destructor --------------------- */
 
     SingleLinkedList() = default;
@@ -103,7 +102,6 @@ public:
     ~SingleLinkedList() {
         Clear();
     }
-
 
     /* -------------- Copy constructor & assignation operator -------------- */
 
@@ -122,7 +120,6 @@ public:
         }
         return *this;
     }
-
 
     /* ----------------------------- Iterators ----------------------------- */
 
@@ -151,7 +148,6 @@ public:
         return ConstIterator{head_.next_node};
     }
 
-
     [[nodiscard]] inline Iterator end() noexcept {
         return Iterator{nullptr};
     }
@@ -163,7 +159,6 @@ public:
     [[nodiscard]] inline ConstIterator cend() const noexcept {
         return ConstIterator{nullptr};
     }
-
 
     /* -------------------------- List's methods --------------------------- */
 
@@ -177,7 +172,7 @@ public:
     }
 
     [[nodiscard]] inline bool IsEmpty() const noexcept {
-        return !size_;
+        return !(head_.next_node && size_);
     }
 
     void PushFront(const Type& value) {
@@ -185,18 +180,13 @@ public:
         ++size_;
     }
 
-    void PushBack(const Type& value) {
-        Iterator back_it = begin();
-        for (size_t i = 1u; i < size_; ++i)
-            ++back_it;
-        InsertAfter(back_it, value);
+    inline void PushBack(const Type& value) {
+        InsertAfter(++GetPositionBeforeBack(), value);
     }
 
     Iterator InsertAfter(ConstIterator pos, const Type& value) {
-        if (size_ && pos == end())
-            throw std::out_of_range(
-                "out of interval `[before_begin(), end())` --> end()"
-            );
+        if (!pos.node_)
+            throw std::invalid_argument("pos argument points to nullptr");
 
         pos.node_->next_node = new Node(value, pos.node_->next_node);
         ++size_;
@@ -204,7 +194,7 @@ public:
     }
 
     void PopFront() noexcept {
-        if (size_ && head_.next_node) {
+        if (!IsEmpty()) {
             Node* next_node = head_.next_node->next_node;
             delete head_.next_node;
 
@@ -213,9 +203,13 @@ public:
         }
     }
 
+    inline void PopBack() {
+        EraseAfter(GetPositionBeforeBack());
+    }
+
     Iterator EraseAfter(ConstIterator pos) noexcept {
-        if (!size_)
-            return end();
+        if (!pos.node_)
+            return Iterator{pos.node_};
 
         Node* to_erase = pos.node_->next_node;
         pos.node_->next_node = to_erase->next_node;
@@ -233,6 +227,13 @@ public:
 private:
     Node head_ = Node();
     size_t size_ = 0;
+
+    Iterator GetPositionBeforeBack() {
+        Iterator before_back = before_begin();
+        for (size_t i = 1u; i < size_; ++i)
+            ++before_back;
+        return before_back;
+    } 
 };
 
 template <typename Type>
@@ -306,6 +307,21 @@ void Test4() {
         list.begin()->deletion_counter_ptr = &deletion_counter;
         assert(deletion_counter == 0);
         list.PopFront();
+        assert(deletion_counter == 1);
+    }
+
+    // Проверка PopBack
+    {
+        SingleLinkedList<int> numbers{3, 14, 15, 92, 6};
+        numbers.PopBack();
+        assert((numbers == SingleLinkedList<int>{3, 14, 15, 92}));
+
+        SingleLinkedList<DeletionSpy> list;
+        list.PushFront(DeletionSpy{});
+        int deletion_counter = 0;
+        list.begin()->deletion_counter_ptr = &deletion_counter;
+        assert(deletion_counter == 0);
+        list.PopBack();
         assert(deletion_counter == 1);
     }
 
