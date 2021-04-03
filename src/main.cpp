@@ -1,7 +1,4 @@
 #include <cassert>
-#include <cstddef>
-#include <experimental/iterator>
-#include <iostream>
 #include <stdexcept>
 
 #include "single_linked_list/single_linked_list.h"
@@ -26,12 +23,12 @@ void Test1() {
     struct DeletionSpy {
         DeletionSpy() = default;
         explicit DeletionSpy(int& instance_counter) noexcept
-            : instance_counter_ptr_(&instance_counter)  //
+            : instance_counter_ptr_(&instance_counter)
         {
             OnAddInstance();
         }
         DeletionSpy(const DeletionSpy& other) noexcept
-            : instance_counter_ptr_(other.instance_counter_ptr_)  //
+            : instance_counter_ptr_(other.instance_counter_ptr_)
         {
             OnAddInstance();
         }

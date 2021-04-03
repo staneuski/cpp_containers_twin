@@ -1,9 +1,6 @@
 #pragma once
-#include <cassert>
-#include <cstddef>
 #include <experimental/iterator>
 #include <iostream>
-#include <stdexcept>
 
 template <typename Type>
 class SingleLinkedList {
