@@ -5,7 +5,7 @@
 
 #include "single_linked_list/single_linked_list.h"
 
-// Шпион, следящий за своим удалением
+// A spies that check their removal
 struct DeletionSpy {
     DeletionSpy() = default;
     explicit DeletionSpy(int& instance_counter) noexcept
@@ -58,7 +58,7 @@ struct DeletionPtrSpy {
     int* deletion_counter_ptr = nullptr;
 };
 
-// Вспомогательный класс, бросающий исключение после создания N-копии
+// Helper class throwing an exception after N-copy is created
 struct ThrowOnCopy {
     ThrowOnCopy() = default;
     explicit ThrowOnCopy(int& copy_counter) noexcept
@@ -76,12 +76,12 @@ struct ThrowOnCopy {
         }
     }
 
-    // Присваивание элементов этого типа не требуется
+    // The assignment of elements of this type is not required
     ThrowOnCopy& operator=(const ThrowOnCopy& rhs) = delete;
 
-    // Адрес счётчика обратного отсчёта. Если не равен nullptr,
-    // то уменьшается при каждом копировании.
-    // Как только обнулится, конструктор копирования выбросит исключение
+    // Reverse counter.
+    // If not nullptr, then decremented with each copy.
+    // Once cleared, the copy constructor will throw an exception
     int* countdown_ptr = nullptr;
 };
 
@@ -160,24 +160,18 @@ TEST(SingleLinkedList, ClearSave) {
 
 TEST(SingleLinkedList, ThrowOnCopy) {
     bool exception_was_thrown = false;
-    // Последовательно уменьшаем счётчик копирований до нуля, пока не будет
-    // выброшено исключение
+    // Sequentially decrement the copy counter to zero until an exception is thrown
     for (int max_copy_counter = 5; max_copy_counter >= 0; --max_copy_counter) {
-        // Создаём непустой список
         SingleLinkedList<ThrowOnCopy> list;
         list.PushFront(ThrowOnCopy{});
-
         try {
             int copy_counter = max_copy_counter;
             list.PushFront(ThrowOnCopy(copy_counter));
-            // Если метод не выбросил исключение, список должен перейти
-            // в новое состояние
-            ASSERT_EQ(list.GetSize(), 2);
+            assert(list.GetSize() == 2);
         } catch (const std::bad_alloc&) {
             exception_was_thrown = true;
-            // После выбрасывания исключения состояние списка должно
-            // остаться прежним
-            ASSERT_EQ(list.GetSize(), 1);
+            // State of the list should remain the same after throwing an exception
+            assert(list.GetSize() == 1);
             break;
         }
 
@@ -221,20 +215,21 @@ TEST(SingleLinkedList, IteratingOverNonEmptyList) {
     const auto new_begin = list.cbegin();
     EXPECT_NE(new_begin, old_begin);
 
-    // Проверка прединкремента
+    // Check preincrement
     {
         auto new_begin_copy(new_begin);
         ASSERT_EQ((++(new_begin_copy)), old_begin);
     }
 
-    // Проверка постинкремента
+    // Check postincrement
     {
         auto new_begin_copy(new_begin);
         ASSERT_EQ(((new_begin_copy)++), new_begin);
         ASSERT_EQ(new_begin_copy, old_begin);
     }
 
-    // Итератор, указывающий на позицию после последнего элемента равен итератору end()
+    // The iterator pointing to the position after the last element is equal
+    // to the end() iterator
     {
         auto old_begin_copy(old_begin);
         ASSERT_EQ((++old_begin_copy), list.end());
@@ -245,14 +240,14 @@ TEST(SingleLinkedList, IteratorsConvertion) {
     SingleLinkedList<int> list;
     list.PushFront(1);
 
-    // Конструирование ConstItrator из Iterator
+    // Constructing ConstItrator from Iterator
     SingleLinkedList<int>::ConstIterator const_it(list.begin());
     ASSERT_EQ(const_it, list.cbegin());
     ASSERT_EQ(*const_it, *list.cbegin());
 
     SingleLinkedList<int>::ConstIterator const_it1;
 
-    // Присваивание ConstIterator-у значения Iterator
+    // Assignment Iterator's value to ConstIterator 
     const_it1 = list.begin();
     ASSERT_EQ(const_it1, const_it);
 }
@@ -284,15 +279,17 @@ TEST(SingleLinkedList, ListsEquality) {
     SingleLinkedList<int> empty_list;
     SingleLinkedList<int> another_empty_list;
 
-    // Список равен самому себе
-    ASSERT_EQ(list_1, list_1);
-    ASSERT_EQ(empty_list, empty_list);
+    const std::string message_self_eq = "List must be equal to itself"
+    ASSERT_EQ(list_1, list_1) << message_self_eq;
+    ASSERT_EQ(empty_list, empty_list) << message_self_eq;
 
-    // Списки с одинаковым содержимым равны, а с разным - не равны
-    ASSERT_EQ(list_1, list_1_copy);
-    ASSERT_NE(list_1, list_2);
-    ASSERT_NE(list_2, list_1);
-    ASSERT_EQ(empty_list, another_empty_list);
+    const std::string message_ne = "Lists with different content mustn't be equal"
+    ASSERT_NE(list_1, list_2) << message_ne;
+    ASSERT_NE(list_2, list_1) << message_ne;
+
+    const std::string message_eq = "Lists with the same content must be equal"
+    ASSERT_EQ(list_1, list_1_copy) << message_eq;
+    ASSERT_EQ(empty_list, another_empty_list) << message_eq;
 }
 
 TEST(SingleLinkedList, Swap) {
@@ -316,23 +313,23 @@ TEST(SingleLinkedList, Swap) {
     ASSERT_EQ(second.GetSize(), old_first_size);
     ASSERT_EQ(first.GetSize(), old_second_size);
 
-    // Обмен при помощи функции swap
+    // Swap using the the swap function
     {
         using std::swap;
+        const std::string message = "Using std::swap() instead of user swap()";
 
-        // В отсутствие пользовательской перегрузки будет вызвана функция
-        // std::swap, которая выполнит обмен через создание временной копии
+        // In the absence of a custom overload, the std::swap() function will
+        // be called, which will perform the swap by creating a temporary copy
         swap(first, second);
 
-        // Убеждаемся, что используется не std::swap, а пользовательская перегрузка
-
-        // Если бы обмен был выполнен с созданием временной копии,
-        // то итератор first.begin() не будет равен ранее сохранённому значению,
-        // так как копия будет хранить свои узлы по иным адресам
-        ASSERT_EQ(first.begin(), old_first_begin);
-        ASSERT_EQ(second.begin(), old_second_begin);
-        ASSERT_EQ(first.GetSize(), old_first_size);
-        ASSERT_EQ(second.GetSize(), old_second_size);
+        // If the exchange was performed with the creation of a temporary copy,
+        // then the first.begin() iterator wouldn't be equal the previously
+        // stored value, since the copy would stored its nodes at different
+        // addresses
+        ASSERT_EQ(first.begin(), old_first_begin) << message;
+        ASSERT_EQ(second.begin(), old_second_begin) << message;
+        ASSERT_EQ(first.GetSize(), old_first_size) << message;
+        ASSERT_EQ(second.GetSize(), old_second_size) << message;
     }
 }
 
@@ -387,7 +384,7 @@ TEST(SingleLinkedList, SafeAssignments){
     auto thrower = src_list.begin();
     src_list.PushFront(ThrowOnCopy{});
 
-    int copy_counter = 0; // при первом же копировании будет выброшего исключение
+    int copy_counter = 0; // the first copy will throw an exception
     thrower->countdown_ptr = &copy_counter;
 
     SingleLinkedList<ThrowOnCopy> dst_list;
@@ -398,10 +395,10 @@ TEST(SingleLinkedList, SafeAssignments){
 
     try {
         dst_list = src_list;
-        assert(false); // Ожидается исключение при присваивании
+        assert(false); // Expected exception on assignment
     } catch (const std::bad_alloc&) {
-        // Проверяем, что состояние списка-приёмника не изменилось
-        // при выбрасывании исключений
+        // Check that the state of the target list has not changed
+        // when throwing exceptions
         ASSERT_EQ(dst_list.GetSize(), 2);
 
         auto it = dst_list.begin();
@@ -414,7 +411,7 @@ TEST(SingleLinkedList, SafeAssignments){
         ASSERT_EQ(it->countdown_ptr, &dst_counter);
         ASSERT_EQ(dst_counter, 10);
     } catch (...) {
-        // Других типов исключений не ожидается
+        // No other types of exceptions expected
         assert(false);
     }
 }

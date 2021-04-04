@@ -17,10 +17,10 @@ add_compile_options(-Wall -Wextra -Werror)
 # GOOGLE TESTS
 #######################################
 find_package(GTest REQUIRED)
-include_directories(test
+include_directories(tests
                     src
                      ${GTEST_INCLUDE_DIRS})
-add_executable(gtests test/main.cpp ${SRC})
+add_executable(gtests tests/main.cpp ${SRC})
 
 
 #######################################
