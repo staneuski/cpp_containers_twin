@@ -27,7 +27,7 @@ add_executable(gtests tests/main.cpp ${SRC})
 # UNIT TESTS
 #######################################
 enable_testing()
-target_link_libraries(gtests ${GTEST_LIBRARIES})
+target_link_libraries(gtests GTest::Main ${GTEST_LIBRARIES})
 add_test(NAME single_linked_list
          COMMAND gtests)
 

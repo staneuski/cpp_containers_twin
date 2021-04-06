@@ -279,15 +279,15 @@ TEST(SingleLinkedList, ListsEquality) {
     SingleLinkedList<int> empty_list;
     SingleLinkedList<int> another_empty_list;
 
-    const std::string message_self_eq = "List must be equal to itself"
+    const std::string message_self_eq = "List must be equal to itself";
     ASSERT_EQ(list_1, list_1) << message_self_eq;
     ASSERT_EQ(empty_list, empty_list) << message_self_eq;
 
-    const std::string message_ne = "Lists with different content mustn't be equal"
+    const std::string message_ne = "Lists with different content mustn't be equal";
     ASSERT_NE(list_1, list_2) << message_ne;
     ASSERT_NE(list_2, list_1) << message_ne;
 
-    const std::string message_eq = "Lists with the same content must be equal"
+    const std::string message_eq = "Lists with the same content must be equal";
     ASSERT_EQ(list_1, list_1_copy) << message_eq;
     ASSERT_EQ(empty_list, another_empty_list) << message_eq;
 }
