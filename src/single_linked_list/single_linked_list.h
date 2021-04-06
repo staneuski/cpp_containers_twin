@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <experimental/iterator>
 #include <iostream>
 
@@ -146,7 +147,7 @@ public:
     }
 
     [[nodiscard]] inline Iterator end() noexcept {
-        return Iterator{nullptr};
+        return {};
     }
 
     [[nodiscard]] inline ConstIterator end() const noexcept {
@@ -154,7 +155,7 @@ public:
     }
 
     [[nodiscard]] inline ConstIterator cend() const noexcept {
-        return ConstIterator{nullptr};
+        return {};
     }
 
     /* -------------------------- List's methods --------------------------- */
@@ -178,7 +179,7 @@ public:
     }
 
     inline void PushBack(const Type& value) {
-        InsertAfter(++GetPositionBeforeBack(), value);
+        InsertAfter(std::next(GetPositionBeforeBack()), value);
     }
 
     Iterator InsertAfter(ConstIterator pos, const Type& value) {
@@ -240,7 +241,8 @@ void swap(SingleLinkedList<Type>& lhs, SingleLinkedList<Type>& rhs) noexcept {
 
 template <typename Type>
 bool operator==(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& rhs) {
-    return (lhs.GetSize() == rhs.GetSize()) && std::equal(lhs.begin(), lhs.begin(), rhs.begin());
+    return (lhs.GetSize() == rhs.GetSize()
+            && std::equal(lhs.begin(), lhs.begin(), rhs.begin()));
 }
 
 template <typename Type>

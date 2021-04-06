@@ -1,3 +1,3 @@
-# single_linked_list
-Single linked list with iterators and with possible work with STL library
-algorithms.
+# cpp_containers_twin
+- Single linked list with iterators and with its possible work with the STL
+library algorithms.
