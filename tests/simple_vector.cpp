@@ -109,7 +109,6 @@ TEST(SimpleVector, Iterating) {
     ASSERT_EQ(v.end(), v.begin() + v.GetSize());
 }
 
-
 // PushBack
 TEST(SimpleVector, PushBack) {
     SimpleVector<int> v(1);
@@ -155,16 +154,17 @@ TEST(SimpleVector, CopyConstructor) {
 
 // Сравнение
 TEST(SimpleVector, Comparison) {
-    ASSERT_TRUE((SimpleVector{1, 2, 3} == SimpleVector{1, 2, 3}));
-    ASSERT_TRUE((SimpleVector{1, 2, 3} != SimpleVector{1, 2, 2}));
+    ASSERT_EQ((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 3}));
+    ASSERT_NE((SimpleVector{2, 3, 4}), (SimpleVector{2, 3, 3}));
 
-    ASSERT_TRUE((SimpleVector{1, 2, 3} < SimpleVector{1, 2, 3, 1}));
-    ASSERT_TRUE((SimpleVector{1, 2, 3} > SimpleVector{1, 2, 2, 1}));
 
-    ASSERT_TRUE((SimpleVector{1, 2, 3} >= SimpleVector{1, 2, 3}));
-    ASSERT_TRUE((SimpleVector{1, 2, 4} >= SimpleVector{1, 2, 3}));
-    ASSERT_TRUE((SimpleVector{1, 2, 3} <= SimpleVector{1, 2, 3}));
-    ASSERT_TRUE((SimpleVector{1, 2, 3} <= SimpleVector{1, 2, 4}));
+    ASSERT_LT((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 3, 1}));
+    ASSERT_GT((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 2, 1}));
+
+    ASSERT_GE((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 3}));
+    ASSERT_GE((SimpleVector{1, 2, 4}), (SimpleVector{1, 2, 3}));
+    ASSERT_LE((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 3}));
+    ASSERT_LE((SimpleVector{1, 2, 3}), (SimpleVector{1, 2, 4}));
 }
 
 // Обмен значений векторов
@@ -206,10 +206,11 @@ TEST(SimpleVector, Insert) {
     SimpleVector<int> v{1, 2, 3, 4};
     v.Insert(v.begin() + 2, 42);
     ASSERT_EQ(v, (SimpleVector<int>{1, 2, 42, 3, 4}));
+    ASSERT_EQ(v.GetSize(), 5u);
 }
 
 // Удаление элементов
-TEST(SimplVector, Erase) {
+TEST(SimpleVector, Erase) {
     SimpleVector<int> v{1, 2, 3, 4};
     v.Erase(v.cbegin() + 2);
     ASSERT_EQ(v, (SimpleVector<int>{1, 2, 4}));
