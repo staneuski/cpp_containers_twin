@@ -68,12 +68,14 @@ TEST(SimpleVector, Resize0) {
     SimpleVector<int> v(3);
     v[2] = 17;
     v.Resize(7);
-    ASSERT_EQ(v.GetSize(), 7);
-    ASSERT_TRUE(v.GetCapacity() >= v.GetSize());
     ASSERT_EQ(v[2], 17);
     ASSERT_EQ(v[3], 0);
+    ASSERT_EQ(v.GetSize(), 7);
+    ASSERT_TRUE(v.GetCapacity() >= v.GetSize())
+        << "GetCapacity(): " << v.GetCapacity()
+        << ", GetSize(): " << v.GetSize();
 }
-TEST(SimpleVector, Resize1) {
+TEST(SimpleVector, ResizeShrink) {
     SimpleVector<int> v(3);
     v[0] = 42;
     v[1] = 55;

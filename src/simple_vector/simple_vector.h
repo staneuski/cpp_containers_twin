@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <initializer_list>
+#include <stdexcept>
 
 #include "array_ptr.h"
 
@@ -14,18 +15,31 @@ public:
     SimpleVector() noexcept = default;
 
     // Создаёт вектор из size элементов, инициализированных значением по умолчанию
-    explicit SimpleVector(size_t size) {
-        //TODO
+    explicit SimpleVector(size_t size)
+        : capacity_(size), size_(size)
+        , elements_(size)
+    {
+        std::fill(begin(), end(), 0);
     }
 
     // Создаёт вектор из size элементов, инициализированных значением value
-    SimpleVector(size_t size, const Type& value) {
-        //TODO
+    SimpleVector(size_t size, const Type& value)
+        : capacity_(size), size_(size)
+        , elements_(size)
+    {
+        std::fill(begin(), end(), value);
     }
 
     // Создаёт вектор из std::initializer_list
-    SimpleVector(std::initializer_list<Type> init) {
-        //TODO
+    SimpleVector(std::initializer_list<Type> init_values)
+        : capacity_(init_values.size()), size_(init_values.size())
+        , elements_(init_values.size())
+    {
+        size_t i = 0;
+        for (const Type& init_value : init_values) {
+            elements_[i] = init_value;
+            ++i;
+        }
     }
 
     // Возвращает количество элементов в массиве
@@ -67,25 +81,51 @@ public:
 
     // Возвращает константную ссылку на элемент с индексом index
     // Выбрасывает исключение std::out_of_range, если index >= size
-    inline const Type& At(size_t index) const {
-        return At(index);
+    const Type& At(size_t index) const {
+        if (index >= size_)
+            throw std::out_of_range(
+                "Try to get element at index " + std::to_string(index) +
+                " for vector size " + std::to_string(size_)
+            );
+
+        return elements_[index];
     }
 
     // Обнуляет размер массива, не изменяя его вместимость
-    void Clear() noexcept {
-        //TODO
+    inline void Clear() noexcept {
+        size_ = 0u;
     }
 
     // Изменяет размер массива.
     // При увеличении размера новые элементы получают значение по умолчанию для типа Type
     void Resize(size_t new_size) {
-        //TODO
+        if (new_size <= size_) {
+            size_ = new_size;
+        } else if (new_size < capacity_) {
+            std::fill(end(), std::next(elements_.Get(), new_size), 0);
+            size_ = new_size;
+        } else {
+            size_t new_capacity = new_size > 2*capacity_ ? new_size
+                                                         : 2*capacity_;
+            ArrayPtr<Type> new_elements(new_capacity);
+
+            std::fill(
+                new_elements.Get(),
+                std::next(new_elements.Get(), new_size),
+                0
+            );
+            std::copy(begin(), end(), new_elements.Get());
+
+            elements_.swap(new_elements);
+            size_ = new_size;
+            capacity_ = new_capacity;
+        }
     }
 
     // Возвращает итератор на начало массива
     // Для пустого массива может быть равен (или не равен) nullptr
     inline Iterator begin() noexcept {
-        return numbers.Get();
+        return elements_.Get();
     }
 
     // Возвращает итератор на элемент, следующий за последним
@@ -109,7 +149,7 @@ public:
     // Возвращает константный итератор на начало массива
     // Для пустого массива может быть равен (или не равен) nullptr
     inline ConstIterator cbegin() const noexcept {
-        return numbers.Get();
+        return elements_.Get();
     }
 
     // Возвращает итератор на элемент, следующий за последним
@@ -120,5 +160,5 @@ public:
 
 private:
     size_t capacity_{}, size_{};
-    ArrayPtr<T> elements_{};
+    ArrayPtr<Type> elements_{};
 };
