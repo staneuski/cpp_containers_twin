@@ -71,9 +71,7 @@ TEST(SimpleVector, Resize0) {
     ASSERT_EQ(v[2], 17);
     ASSERT_EQ(v[3], 0);
     ASSERT_EQ(v.GetSize(), 7);
-    ASSERT_TRUE(v.GetCapacity() >= v.GetSize())
-        << "GetCapacity(): " << v.GetCapacity()
-        << ", GetSize(): " << v.GetSize();
+    ASSERT_GE(v.GetCapacity(), v.GetSize());
 }
 TEST(SimpleVector, ResizeShrink) {
     SimpleVector<int> v(3);
@@ -109,6 +107,112 @@ TEST(SimpleVector, Iterating) {
     ASSERT_TRUE(v.begin());
     ASSERT_EQ(*v.begin(), 42);
     ASSERT_EQ(v.end(), v.begin() + v.GetSize());
+}
+
+
+// PushBack
+TEST(SimpleVector, PushBack) {
+    SimpleVector<int> v(1);
+    v.PushBack(42);
+    ASSERT_GE(v.GetCapacity(), v.GetSize());
+    ASSERT_EQ(v.GetSize(), 2);
+    ASSERT_EQ(v[0], 0);
+    ASSERT_EQ(v[1], 42);
+}
+
+// Если хватает места, PushBack не увеличивает Capacity
+TEST(SimpleVector, PushBackIncreasingCapacity) {
+    SimpleVector<int> v(2);
+    v.Resize(1);
+    const size_t old_capacity = v.GetCapacity();
+    v.PushBack(123);
+    ASSERT_EQ(v.GetSize(), 2);
+    ASSERT_EQ(v.GetCapacity(), old_capacity);
+}
+
+// PopBack
+TEST(SimpleVector, PopBack) {
+    SimpleVector<int> v{0, 1, 2, 3};
+    const size_t old_capacity = v.GetCapacity();
+    const auto old_begin = v.begin();
+    v.PopBack();
+    ASSERT_EQ(v.GetCapacity(), old_capacity);
+    ASSERT_EQ(v.begin(), old_begin);
+    ASSERT_EQ(v, (SimpleVector<int>{0, 1, 2}));
+}
+
+// Конструктор копирования
+TEST(SimpleVector, CopyConstructor) {
+    SimpleVector<int> numbers{1, 2};
+    auto numbers_copy(numbers);
+    ASSERT_NE(&numbers_copy[0], &numbers[0]);
+    ASSERT_EQ(numbers_copy.GetSize(), numbers.GetSize());
+    for (size_t i = 0; i < numbers.GetSize(); ++i) {
+        ASSERT_EQ(numbers_copy[i], numbers[i]);
+        ASSERT_NE(&numbers_copy[i], &numbers[i]);
+    }
+}
+
+// Сравнение
+TEST(SimpleVector, Comparison) {
+    ASSERT_TRUE((SimpleVector{1, 2, 3} == SimpleVector{1, 2, 3}));
+    ASSERT_TRUE((SimpleVector{1, 2, 3} != SimpleVector{1, 2, 2}));
+
+    ASSERT_TRUE((SimpleVector{1, 2, 3} < SimpleVector{1, 2, 3, 1}));
+    ASSERT_TRUE((SimpleVector{1, 2, 3} > SimpleVector{1, 2, 2, 1}));
+
+    ASSERT_TRUE((SimpleVector{1, 2, 3} >= SimpleVector{1, 2, 3}));
+    ASSERT_TRUE((SimpleVector{1, 2, 4} >= SimpleVector{1, 2, 3}));
+    ASSERT_TRUE((SimpleVector{1, 2, 3} <= SimpleVector{1, 2, 3}));
+    ASSERT_TRUE((SimpleVector{1, 2, 3} <= SimpleVector{1, 2, 4}));
+}
+
+// Обмен значений векторов
+TEST(SimpleVector, Swap) {
+    SimpleVector<int> v1{42, 666};
+    SimpleVector<int> v2;
+    v2.PushBack(0);
+    v2.PushBack(1);
+    v2.PushBack(2);
+    const int* const begin1 = &v1[0];
+    const int* const begin2 = &v2[0];
+
+    const size_t capacity1 = v1.GetCapacity();
+    const size_t capacity2 = v2.GetCapacity();
+
+    const size_t size1 = v1.GetSize();
+    const size_t size2 = v2.GetSize();
+
+    static_assert(noexcept(v1.swap(v2)));
+    v1.swap(v2);
+    ASSERT_EQ(&v2[0], begin1);
+    ASSERT_EQ(&v1[0], begin2);
+    ASSERT_EQ(v1.GetSize(), size2);
+    ASSERT_EQ(v2.GetSize(), size1);
+    ASSERT_EQ(v1.GetCapacity(), capacity2);
+    ASSERT_EQ(v2.GetCapacity(), capacity1);
+}
+
+// Присваивание
+TEST(SimpleVector, Assignment) {
+    SimpleVector<int> src_vector{1, 2, 3, 4};
+    SimpleVector<int> dst_vector{1, 2, 3, 4, 5, 6};
+    dst_vector = src_vector;
+    ASSERT_EQ(dst_vector, src_vector);
+}
+
+// Вставка элементов
+TEST(SimpleVector, Insert) {
+    SimpleVector<int> v{1, 2, 3, 4};
+    v.Insert(v.begin() + 2, 42);
+    ASSERT_EQ(v, (SimpleVector<int>{1, 2, 42, 3, 4}));
+}
+
+// Удаление элементов
+TEST(SimplVector, Erase) {
+    SimpleVector<int> v{1, 2, 3, 4};
+    v.Erase(v.cbegin() + 2);
+    ASSERT_EQ(v, (SimpleVector<int>{1, 2, 4}));
 }
 
 int main(int argc, char **argv) {
