@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "array_ptr.h"
+#include "size_obj_wrapper.h"
 
 template <typename Type>
 class SimpleVector {
@@ -49,6 +50,12 @@ public:
         SimpleVector<Type> tmp(other.size_);
         std::copy(other.begin(), other.end(), tmp.begin());
         swap(tmp);
+    }
+
+    SimpleVector(const SizeObjWrapper capacity_obj)
+        : capacity_(capacity_obj.Get())
+        , elements_(capacity_obj.Get())
+    {
     }
 
     SimpleVector& operator=(const SimpleVector& rhs) {
@@ -120,20 +127,13 @@ public:
             std::fill(end(), std::next(elements_.Get(), new_size), 0);
             size_ = new_size;
         } else {
-            size_t new_capacity = std::max(2*capacity_, new_size);
-            ArrayPtr<Type> new_elements(new_capacity);
-
-            std::fill(
-                new_elements.Get(),
-                std::next(new_elements.Get(), new_size),
-                0
-            );
-            std::copy(begin(), end(), new_elements.Get());
-
-            elements_.swap(new_elements);
-            size_ = new_size;
-            capacity_ = new_capacity;
+            Extend(std::max(2*capacity_, new_size), new_size);
         }
+    }
+
+    inline void Reserve(size_t new_capacity) {
+        if (capacity_ <= new_capacity)
+            Extend(new_capacity, size_);
     }
 
     inline void PushBack(const Type& value) {
@@ -234,6 +234,17 @@ public:
 private:
     size_t capacity_{}, size_{};
     ArrayPtr<Type> elements_{};
+
+    void Extend(const size_t new_capacity, const size_t new_size) {
+        ArrayPtr<Type> new_elements(new_capacity);
+        std::fill(new_elements.Get(), std::next(new_elements.Get(), new_size), 0);
+
+        std::copy(begin(), end(), new_elements.Get());
+        elements_.swap(new_elements);
+
+        capacity_ = new_capacity;
+        size_ = new_size;
+    }
 };
 
 template <typename Type>

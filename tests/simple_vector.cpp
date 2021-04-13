@@ -216,6 +216,34 @@ TEST(SimpleVector, Erase) {
     ASSERT_EQ(v, (SimpleVector<int>{1, 2, 4}));
 }
 
+TEST(SimpleVector, ReserveConstructor) {
+    SimpleVector<int> v(Reserve(5));
+    ASSERT_EQ(v.GetCapacity(), 5);
+    ASSERT_TRUE(v.IsEmpty());
+}
+
+TEST(SimpleVector, ReserveMethod) {
+    SimpleVector<int> v;
+
+    v.Reserve(5);
+    ASSERT_EQ(v.GetCapacity(), 5);
+    ASSERT_TRUE(v.IsEmpty());
+
+    v.Reserve(1);
+    ASSERT_EQ(v.GetCapacity(), 5)
+        << "capacity shouldn't be changed after try to decreasing it";
+
+    for (int i = 0; i < 10; ++i)
+        v.PushBack(i);
+    ASSERT_EQ(v.GetSize(), 10);
+
+    v.Reserve(100);
+    ASSERT_EQ(v.GetSize(), 10);
+    ASSERT_EQ(v.GetCapacity(), 100);
+    for (int i = 0; i < 10; ++i)
+        ASSERT_EQ(v[i], i);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
