@@ -1,10 +1,46 @@
 #include <cassert>
+#include <iostream>
 #include <stdexcept>
+#include <numeric>
 
 #include <gtest/gtest.h>
 
 #include "simple_vector/simple_vector.h"
 
+class SpecialMembersTester {
+public:
+    SpecialMembersTester()
+        : SpecialMembersTester(5) {
+    }
+
+    SpecialMembersTester(size_t num)
+        : element_(num) {
+    }
+
+    SpecialMembersTester(const SpecialMembersTester& other) = delete;
+    SpecialMembersTester& operator=(const SpecialMembersTester& other) = delete;
+    SpecialMembersTester(SpecialMembersTester&& other) {
+        element_ = std::exchange(other.element_, 0);
+    }
+
+    SpecialMembersTester& operator=(SpecialMembersTester&& other) {
+        element_ = std::exchange(other.element_, 0);
+        return *this;
+    }
+
+    size_t GetValue() const {
+        return element_;
+    }
+
+private:
+    size_t element_;
+};
+
+SimpleVector<int> GenerateVector(size_t size) {
+    SimpleVector<int> v(size);
+    std::iota(v.begin(), v.end(), 1);
+    return v;
+}
 
 // Инициализация конструктором по умолчанию
 TEST(SimpleVector, InitialisingDefault) {
@@ -242,6 +278,114 @@ TEST(SimpleVector, ReserveMethod) {
     ASSERT_EQ(v.GetCapacity(), 100);
     for (int i = 0; i < 10; ++i)
         ASSERT_EQ(v[i], i);
+}
+
+TEST(SimpleVector, TestTemporaryObjConstructor) {
+    const size_t size = 1000000;
+
+    SimpleVector<int> moved_vector(GenerateVector(size));
+    ASSERT_EQ(moved_vector.GetSize(), size)
+        << "Copy elision must work with a temporary object";
+}
+
+TEST(SimpleVector, TestTemporaryObjOperator) {
+    const size_t size = 1000000;
+
+    SimpleVector<int> moved_vector;
+    ASSERT_EQ(moved_vector.GetSize(), 0);
+
+    moved_vector = GenerateVector(size);
+    ASSERT_EQ(moved_vector.GetSize(), size)
+        << "operator= must work with a temporary object";
+}
+
+TEST(SimpleVector, TestNamedMoveConstructor) {
+    const size_t size = 5;
+    const std::string comment = "move constructor doesn't working";
+
+    SimpleVector<int> vector_to_move(GenerateVector(size));
+    ASSERT_EQ(vector_to_move.GetSize(), size);
+
+    SimpleVector<int> moved_vector(std::move(vector_to_move));
+    ASSERT_EQ(moved_vector.GetSize(), size) << comment;
+    ASSERT_EQ(vector_to_move.GetSize(), 0) << comment;
+}
+
+TEST(SimpleVector, TestNamedMoveOperator) {
+    const size_t size = 1000000;
+    const std::string comment = "operator= must work with a named object";
+
+    SimpleVector<int> vector_to_move(GenerateVector(size));
+    ASSERT_EQ(vector_to_move.GetSize(), size);
+
+    SimpleVector<int> moved_vector = std::move(vector_to_move);
+    ASSERT_EQ(moved_vector.GetSize(), size) << comment;
+    ASSERT_EQ(vector_to_move.GetSize(), 0) << comment;
+}
+
+TEST(SimpleVector, TestNoncopiableMoveConstructor) {
+    const size_t size = 5;
+    const std::string comment = "move constructor must work with a noncopiable object";
+
+    SimpleVector<SpecialMembersTester> vector_to_move;
+    for (size_t i = 0; i < size; ++i)
+        vector_to_move.PushBack(SpecialMembersTester(i));
+
+    SimpleVector<SpecialMembersTester> moved_vector = std::move(vector_to_move);
+    ASSERT_EQ(moved_vector.GetSize(), size) << comment;
+    ASSERT_EQ(vector_to_move.GetSize(), 0) << comment;
+
+    for (size_t i = 0; i < size; ++i)
+        ASSERT_EQ(moved_vector[i].GetValue(), i) << comment;
+}
+
+TEST(SimpleVector, TestNoncopiablePushBack) {
+    const size_t size = 5;
+    const std::string comment = "PushBack() must work with a noncopiable";
+
+    SimpleVector<SpecialMembersTester> v;
+    for (size_t i = 0; i < size; ++i)
+        v.PushBack(SpecialMembersTester(i));
+
+    ASSERT_EQ(v.GetSize(), size) << comment;
+    for (size_t i = 0; i < size; ++i)
+        ASSERT_EQ(v[i].GetValue(), i) << comment;
+}
+
+TEST(SimpleVector, TestNoncopiableInsert) {
+    const size_t size = 5;
+    const std::string comment = "Insert() must work with a noncopiable noncopiable object";
+    const std::string begin_insert_comment = comment + " when inserting to begin";
+    const std::string middle_insert_comment = comment + " when inserting to middle";
+    const std::string end_insert_comment = comment + " when inserting to end";
+
+    SimpleVector<SpecialMembersTester> v;
+    for (size_t i = 0; i < size; ++i)
+        v.PushBack(SpecialMembersTester(i));
+
+    v.Insert(v.begin(), SpecialMembersTester(size + 1));
+    ASSERT_EQ(v.GetSize(), size + 1) << begin_insert_comment;
+    ASSERT_EQ(v.begin()->GetValue(), size + 1) << begin_insert_comment;
+
+    v.Insert(v.end(), SpecialMembersTester(size + 2));
+    ASSERT_EQ(v.GetSize(), size + 2) << end_insert_comment;
+    ASSERT_EQ((v.end() - 1)->GetValue(), size + 2) << end_insert_comment;
+
+    v.Insert(v.begin() + 3, SpecialMembersTester(size + 3));
+    ASSERT_EQ(v.GetSize(), size + 3) << middle_insert_comment;
+    ASSERT_EQ((v.begin() + 3)->GetValue(), size + 3) << middle_insert_comment;
+}
+
+TEST(SimpleVector, TestNoncopiableErase) {
+    const size_t size = 3;
+
+    SimpleVector<SpecialMembersTester> v;
+    for (size_t i = 0; i < size; ++i)
+        v.PushBack(SpecialMembersTester(i));
+
+    auto it = v.Erase(v.begin());
+    ASSERT_EQ(it->GetValue(), 1)
+        << "Erase() must work with a noncopiable noncopiable object";
 }
 
 int main(int argc, char **argv) {
