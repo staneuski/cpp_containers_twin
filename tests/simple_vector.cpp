@@ -14,26 +14,25 @@ public:
     }
 
     SpecialMembersTester(size_t num)
-        : element_(num) {
+        : value_(num) {
     }
-
     SpecialMembersTester(const SpecialMembersTester& other) = delete;
     SpecialMembersTester& operator=(const SpecialMembersTester& other) = delete;
     SpecialMembersTester(SpecialMembersTester&& other) {
-        element_ = std::exchange(other.element_, 0);
+        value_ = std::exchange(other.value_, 0);
     }
 
     SpecialMembersTester& operator=(SpecialMembersTester&& other) {
-        element_ = std::exchange(other.element_, 0);
+        value_ = std::exchange(other.value_, 0);
         return *this;
     }
 
     size_t GetValue() const {
-        return element_;
+        return value_;
     }
 
 private:
-    size_t element_;
+    size_t value_;
 };
 
 SimpleVector<int> GenerateVector(size_t size) {
@@ -241,8 +240,8 @@ TEST(SimpleVector, Assignment) {
 TEST(SimpleVector, Insert) {
     SimpleVector<int> v{1, 2, 3, 4};
     v.Insert(v.begin() + 2, 42);
-    ASSERT_EQ(v, (SimpleVector<int>{1, 2, 42, 3, 4}));
     ASSERT_EQ(v.GetSize(), 5u);
+    ASSERT_EQ(v, (SimpleVector<int>{1, 2, 42, 3, 4}));
 }
 
 // Удаление элементов
