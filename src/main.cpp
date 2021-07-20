@@ -1,11 +1,11 @@
+#include "simple_vector/simple_vector.h"
+
 #include <cassert>
 #include <experimental/iterator>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "simple_vector/simple_vector.h"
 
 template<typename InputIt>
 std::ostream& Print(const InputIt& first, const InputIt& last) {

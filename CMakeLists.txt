@@ -11,10 +11,12 @@ add_compile_options(-Wall -Wextra -Werror)
 
 include_directories(src tests)
 
+set(OPTIONAL)
 set(SIMPLE_VECTOR)
 set(SINGLE_LINKED_LIST)
+set(VECTOR)
 
-set(SRC ${SIMPLE_VECTOR} ${OPTIONAL} ${SINGLE_LINKED_LIST})
+set(SRC ${SIMPLE_VECTOR} ${OPTIONAL} ${SINGLE_LINKED_LIST} ${VECTOR})
 
 
 #######################################
@@ -34,6 +36,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 
+#- src/optional
+add_executable(gtest-optional tests/g-optional.cpp ${OPTIONAL})
+target_link_libraries(gtest-optional gtest_main)
+add_test(NAME optional COMMAND gtest-optional)
+
 #- src/simple_vector
 add_executable(gtest-simple_vector tests/g-simple_vector.cpp ${SIMPLE_VECTOR})
 target_link_libraries(gtest-simple_vector gtest_main)
@@ -43,3 +50,8 @@ add_test(NAME simple_vector COMMAND gtest-simple_vector)
 add_executable(gtest-single_linked_list tests/g-single_linked_list.cpp ${SINGLE_LINKED_LIST})
 target_link_libraries(gtest-single_linked_list gtest_main)
 add_test(NAME single_linked_list COMMAND gtest-single_linked_list)
+
+#- src/simple_vector
+add_executable(gtest-vector tests/g-vector.cpp ${VECTOR})
+target_link_libraries(gtest-vector gtest_main)
+add_test(NAME vector COMMAND gtest-vector)
