@@ -23,6 +23,7 @@ set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 find_package(GTest REQUIRED)
 include_directories(src tests ${GTEST_INCLUDE_DIRS})
 add_executable(gtest-single_linked_list tests/single_linked_list.cpp ${SRC})
+add_executable(gtest-simple_vector tests/simple_vector.cpp ${SRC})
 
 
 #######################################
@@ -32,3 +33,6 @@ enable_testing()
 
 target_link_libraries(gtest-single_linked_list GTest::Main ${GTEST_LIBRARIES})
 add_test(NAME single_linked_list COMMAND gtest-single_linked_list)
+
+target_link_libraries(gtest-simple_vector GTest::Main ${GTEST_LIBRARIES})
+add_test(NAME simple_vector COMMAND gtest-simple_vector)
