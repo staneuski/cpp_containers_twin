@@ -16,6 +16,7 @@ std::ostream& Print(const InputIt& first, const InputIt& last) {
 
 int main() {
     using namespace std;
+    using namespace cstl;
 
     SimpleVector<int> v{1, 2, 3, 4};
     Print(v.begin(), v.end()) << endl;

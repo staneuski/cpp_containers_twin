@@ -7,6 +7,8 @@
 
 #include "simple_vector/simple_vector.h"
 
+using namespace cstl;
+
 class SpecialMembersTester {
 public:
     SpecialMembersTester()

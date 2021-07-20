@@ -8,6 +8,8 @@
 #include "array_ptr.h"
 #include "size_obj_wrapper.h"
 
+namespace cstl {
+
 template <typename Type>
 class SimpleVector {
     using Iterator = Type*;
@@ -288,3 +290,5 @@ template <typename Type>
 bool operator>=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
     return !(lhs < rhs) || (lhs == rhs);
 }
+
+} // namespace cstl

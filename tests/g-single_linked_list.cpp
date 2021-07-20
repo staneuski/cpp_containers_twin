@@ -5,6 +5,8 @@
 
 #include "single_linked_list/single_linked_list.h"
 
+using namespace cstl;
+
 // A spies that check their removal
 struct DeletionSpy {
     DeletionSpy() = default;

@@ -1,38 +1,45 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(search_engine VERSION 0.5.0)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_compile_options(-Wall -Wextra -Werror)
-
-set(SRC)
-
-#######################################
-# MAIN
-#######################################
-add_executable(main src/main.cpp ${SRC})
-
+project(custom_stl VERSION 0.1.3)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_FLAGS_DEBUG -fsanitize=address)
+
+add_compile_options(-Wall -Wextra -Werror)
+
+include_directories(src tests)
+
+set(SIMPLE_VECTOR)
+set(SINGLE_LINKED_LIST)
+
+set(SRC ${SIMPLE_VECTOR} ${OPTIONAL} ${SINGLE_LINKED_LIST})
+
 
 #######################################
-# GOOGLE TESTS
+# APPS
 #######################################
-find_package(GTest REQUIRED)
-include_directories(src tests ${GTEST_INCLUDE_DIRS})
-add_executable(gtest-single_linked_list tests/single_linked_list.cpp ${SRC})
-add_executable(gtest-simple_vector tests/simple_vector.cpp ${SRC})
+add_executable(main src/main.cpp ${SRC})
 
 
 #######################################
-# UNIT TESTS
+# TESTS
 #######################################
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/0d9daa99365eb00a2b81392b6ec2c8a802769ef0.zip
+)
+FetchContent_MakeAvailable(googletest)
 enable_testing()
 
-target_link_libraries(gtest-single_linked_list GTest::Main ${GTEST_LIBRARIES})
-add_test(NAME single_linked_list COMMAND gtest-single_linked_list)
-
-target_link_libraries(gtest-simple_vector GTest::Main ${GTEST_LIBRARIES})
+#- src/simple_vector
+add_executable(gtest-simple_vector tests/g-simple_vector.cpp ${SIMPLE_VECTOR})
+target_link_libraries(gtest-simple_vector gtest_main)
 add_test(NAME simple_vector COMMAND gtest-simple_vector)
+
+#- src/single_linked_list
+add_executable(gtest-single_linked_list tests/g-single_linked_list.cpp ${SINGLE_LINKED_LIST})
+target_link_libraries(gtest-single_linked_list gtest_main)
+add_test(NAME single_linked_list COMMAND gtest-single_linked_list)

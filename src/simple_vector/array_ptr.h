@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <utility>
 
+namespace cstl {
+
 template <typename Type>
 class ArrayPtr {
 public:
@@ -63,3 +65,5 @@ public:
 private:
     Type* raw_ptr_ = nullptr;
 };
+
+} // namespace cstl
