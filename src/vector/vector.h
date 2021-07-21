@@ -15,16 +15,27 @@ public:
             : data_(Allocate(size))
             , capacity_(size)
             , size_(size) {
-        for (size_t i = 0; i != size; ++i)
-            new (data_ + i) T();
+
+        size_t i = 0;
+        try {
+            for (; i != size; ++i)
+                new (data_ + i) T();
+        } catch (...) {
+            SafeThrow(data_, i);
+        }
     }
 
     Vector(const Vector& other)
             : data_(Allocate(other.size_))
             , capacity_(other.size_)
             , size_(other.size_) {
-        for (size_t i = 0; i != other.size_; ++i)
-            CopyConstruct(data_ + i, other.data_[i]);
+        size_t i = 0;
+        try {
+            for (; i != other.size_; ++i)
+                CopyConstruct(data_ + i, other.data_[i]);
+        } catch (...) {
+            SafeThrow(data_, i);
+        }
     }
 
     ~Vector() {
@@ -54,8 +65,14 @@ public:
             return;
 
         T* new_data = Allocate(new_capacity);
-        for (size_t i = 0; i != size_; ++i)
-            CopyConstruct(new_data + i, data_[i]);
+
+        size_t i = 0;
+        try {
+            for (; i != size_; ++i)
+                CopyConstruct(new_data + i, data_[i]);
+        } catch (...) {
+            SafeThrow(new_data, i);
+        }
 
         DestroyN(data_, size_);
         Deallocate(data_);
@@ -88,6 +105,12 @@ private:
     static void DestroyN(T* buf, size_t n) noexcept {
         for (size_t i = 0; i != n; ++i)
             Destroy(buf + i);
+    }
+
+    static void SafeThrow(T* buf, const size_t i) {
+        DestroyN(buf, i);
+        Deallocate(buf);
+        throw;
     }
 };
 
