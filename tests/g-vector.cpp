@@ -302,7 +302,7 @@ TEST(Vector, PushBack) {
         Obj o{ID};
         v.PushBack(o);
         ASSERT_EQ(v.Size(), SIZE + 1);
-        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(v[SIZE].id, ID);
         ASSERT_EQ(Obj::num_default_constructed, SIZE);
         ASSERT_EQ(Obj::num_copied, 1);
@@ -316,13 +316,45 @@ TEST(Vector, PushBack) {
         Vector<Obj> v(SIZE);
         v.PushBack(Obj{ID});
         ASSERT_EQ(v.Size(), SIZE + 1);
-        ASSERT_EQ(v.Capacity(),SIZE * 2);
+        ASSERT_EQ(v.Capacity(),SIZE*2);
         ASSERT_EQ(v[SIZE].id, ID);
         ASSERT_EQ(Obj::num_default_constructed, SIZE);
         ASSERT_EQ(Obj::num_copied, 0);
         ASSERT_EQ(Obj::num_constructed_with_id, 1);
         ASSERT_EQ(Obj::num_moved, SIZE + 1);
     }
+    {
+        Vector<TestObj> v(1);
+        ASSERT_EQ(v.Size(), v.Capacity());
+        // Операция PushBack существующего элемента вектора 
+        // должна быть безопасна даже при реаллокации памяти
+        v.PushBack(v[0]);
+        ASSERT_TRUE(v[0].IsAlive());
+        ASSERT_TRUE(v[1].IsAlive());
+    }
+    {
+        Vector<TestObj> v(1);
+        ASSERT_EQ(v.Size(), v.Capacity());
+        // Операция PushBack для перемещения существующего элемента вектора 
+        // должна быть безопасна даже при реаллокации памяти
+        v.PushBack(std::move(v[0]));
+        ASSERT_TRUE(v[0].IsAlive());
+        ASSERT_TRUE(v[1].IsAlive());
+    }
+}
+
+TEST(Vector, PopBack) {
+    using namespace cstl;
+
+    const size_t ID = 42;
+
+    Obj::ResetCounters();
+    Vector<Obj> v;
+    v.PushBack(Obj{ID});
+    v.PopBack();
+    ASSERT_EQ(v.Size(), 0);
+    ASSERT_EQ(v.Capacity(), 1);
+    ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
 }
 
 int main(int argc, char **argv) {
