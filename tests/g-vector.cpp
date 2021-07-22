@@ -12,13 +12,18 @@ struct Obj {
         ++num_default_constructed;
     }
 
-    Obj(const Obj& other) {
+    explicit Obj(int id) : id(id) {
+        ++num_constructed_with_id;
+    }
+
+    Obj(const Obj& other) : id(other.id) {
         if (other.throw_on_copy)
             throw std::runtime_error("Oops");
+
         ++num_copied;
     }
 
-    Obj(Obj&&) noexcept {
+    Obj(Obj&& other) noexcept : id(other.id) {
         ++num_moved;
     }
 
@@ -27,10 +32,12 @@ struct Obj {
 
     ~Obj() {
         ++num_destroyed;
+        id = 0;
     }
 
     static int GetAliveObjectCount() {
-        return num_default_constructed + num_copied + num_moved - num_destroyed;
+        return num_default_constructed + num_copied + num_moved + num_constructed_with_id
+            - num_destroyed;
     }
 
     static void ResetCounters() {
@@ -39,12 +46,15 @@ struct Obj {
         num_copied = 0;
         num_moved = 0;
         num_destroyed = 0;
+        num_constructed_with_id = 0;
     }
 
     bool throw_on_copy = false;
+    int id = 0;
 
     static inline int default_construction_throw_countdown = 0;
     static inline int num_default_constructed = 0;
+    static inline int num_constructed_with_id = 0;
     static inline int num_copied = 0;
     static inline int num_moved = 0;
     static inline int num_destroyed = 0;
@@ -80,7 +90,7 @@ TEST(Vector, Reserve) {
         ASSERT_EQ(v[INDEX], MAGIC);
         ASSERT_EQ(&v[100] - &v[0], 100);
 
-        v.Reserve(SIZE * 2);
+        v.Reserve(SIZE*2);
         ASSERT_EQ(v.Size(), SIZE);
         ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(v[INDEX], MAGIC);
@@ -140,11 +150,91 @@ TEST(Vector, SaveConstuct) {
     {
         Vector<Obj> v(SIZE);
         v[SIZE - 1].throw_on_copy = true;
-        v.Reserve(SIZE * 2);
+        v.Reserve(SIZE*2);
 
         ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(v.Size(), SIZE);
         ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE);
+    }
+}
+
+TEST(Vector, CopyAndMove) {
+    using namespace cstl;
+
+    const size_t MEDIUM_SIZE = 100;
+    const size_t LARGE_SIZE = 250;
+    const int ID = 42;
+
+    {
+        Obj::ResetCounters();
+        Vector<int> v(MEDIUM_SIZE);
+        {
+            auto v_copy(std::move(v));
+
+            ASSERT_EQ(v_copy.Size(), MEDIUM_SIZE);
+            ASSERT_EQ(v_copy.Capacity(), MEDIUM_SIZE);
+        }
+        ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
+    }
+
+    {
+        Obj::ResetCounters();
+        {
+            Vector<Obj> v(MEDIUM_SIZE);
+            v[MEDIUM_SIZE/2].id = ID;
+            ASSERT_EQ(Obj::num_default_constructed, MEDIUM_SIZE);
+
+            Vector<Obj> moved_from_v(std::move(v));
+            ASSERT_EQ(moved_from_v.Size(), MEDIUM_SIZE);
+            ASSERT_EQ(moved_from_v[MEDIUM_SIZE/2].id, ID);
+        }
+        ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
+
+        ASSERT_EQ(Obj::num_moved, 0);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_default_constructed, MEDIUM_SIZE);
+    }
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v_medium(MEDIUM_SIZE);
+        v_medium[MEDIUM_SIZE/2].id = ID;
+        Vector<Obj> v_large(LARGE_SIZE);
+        v_large = v_medium;
+        ASSERT_EQ(v_large.Size(), MEDIUM_SIZE);
+        ASSERT_EQ(v_large.Capacity(), LARGE_SIZE);
+        ASSERT_EQ(v_large[MEDIUM_SIZE/2].id, ID);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), MEDIUM_SIZE + MEDIUM_SIZE);
+    }
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v(MEDIUM_SIZE);
+        {
+            Vector<Obj> v_large(LARGE_SIZE);
+            v_large[LARGE_SIZE - 1].id = ID;
+            v = v_large;
+            ASSERT_EQ(v.Size(), LARGE_SIZE);
+            ASSERT_EQ(v_large.Capacity(), LARGE_SIZE);
+            ASSERT_EQ(v_large[LARGE_SIZE - 1].id, ID);
+            ASSERT_EQ(Obj::GetAliveObjectCount(), LARGE_SIZE + LARGE_SIZE);
+        }
+        ASSERT_EQ(Obj::GetAliveObjectCount(), LARGE_SIZE);
+    }
+
+    ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v(MEDIUM_SIZE);
+        v[MEDIUM_SIZE - 1].id = ID;
+        Vector<Obj> v_small(MEDIUM_SIZE/2);
+        v_small.Reserve(MEDIUM_SIZE + 1);
+        const size_t num_copies = Obj::num_copied;
+        v_small = v;
+        ASSERT_EQ(v_small.Size(), v.Size());
+        ASSERT_EQ(v_small.Capacity(), MEDIUM_SIZE + 1);
+        v_small[MEDIUM_SIZE - 1].id = ID;
+        ASSERT_EQ(Obj::num_copied - num_copies, MEDIUM_SIZE - (MEDIUM_SIZE/2));
     }
 }
 

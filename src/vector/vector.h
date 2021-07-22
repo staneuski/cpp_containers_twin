@@ -19,8 +19,23 @@ public:
         , capacity_(capacity) {
     }
 
+    RawMemory(const RawMemory&) = delete;
+
+    RawMemory(RawMemory&& other) noexcept {
+        Swap(other);
+    }
+
     ~RawMemory() {
         Deallocate(buffer_);
+    }
+
+    RawMemory& operator=(const RawMemory&) = delete;
+
+    RawMemory& operator=(RawMemory&& rhs) noexcept {
+        if (this != &rhs) {
+            Swap(rhs);
+        }
+        return *this;
     }
 
     T* operator+(size_t offset) noexcept {
@@ -94,16 +109,41 @@ public:
         );
     }
 
+    Vector(Vector&& other) noexcept {
+        Swap(other);
+    }
+
     ~Vector() {
         std::destroy_n(data_.GetAddress(), size_);
     }
 
-    size_t Size() const noexcept {
-        return size_;
+    Vector& operator=(const Vector& rhs) {
+        if (this != &rhs && rhs.size_ > data_.Capacity()) {
+            Vector tmp(rhs);
+            Swap(tmp);
+        } else if (this != &rhs) {
+            for (size_t i = 0; i < size_ && i < rhs.size_; i++)
+                data_[i] = rhs.data_[i];
+
+            if (size_ < rhs.size_)
+                std::uninitialized_copy_n(
+                    rhs.data_ + size_,
+                    rhs.size_ - size_,
+                    data_.GetAddress() + size_
+                );
+            else
+                std::destroy_n(
+                    data_.GetAddress() + rhs.size_, 
+                    size_ - rhs.size_
+                );
+            size_ = rhs.size_;
+        }
+        return *this;
     }
 
-    size_t Capacity() const noexcept {
-        return data_.Capacity();
+    Vector& operator=(Vector&& rhs) noexcept {
+        Swap(rhs);
+        return *this;
     }
 
     const T& operator[](size_t index) const noexcept {
@@ -115,6 +155,19 @@ public:
         return data_[index];
     }
 
+    void Swap(Vector& other) noexcept {
+        data_.Swap(other.data_);
+        std::swap(size_, other.size_);
+    }
+
+    size_t Size() const noexcept {
+        return size_;
+    }
+
+    size_t Capacity() const noexcept {
+        return data_.Capacity();
+    }
+
     void Reserve(size_t new_capacity) {
         if (new_capacity <= Capacity())
             return;
@@ -122,9 +175,17 @@ public:
         RawMemory<T> new_data(new_capacity);
         if constexpr (std::is_nothrow_move_constructible_v<T>
                       || !std::is_copy_constructible_v<T>)
-            std::uninitialized_move_n(data_.GetAddress(), size_, new_data.GetAddress());
+            std::uninitialized_move_n(
+                data_.GetAddress(),
+                size_,
+                new_data.GetAddress()
+            );
         else
-            std::uninitialized_copy_n(data_.GetAddress(), size_, new_data.GetAddress());
+            std::uninitialized_copy_n(
+                data_.GetAddress(),
+                size_,
+                new_data.GetAddress()
+            );
 
         std::destroy_n(data_.GetAddress(), size_);
         data_.Swap(new_data);
@@ -133,10 +194,6 @@ public:
 private:
     RawMemory<T> data_;
     size_t size_ = 0;
-
-    static void CopyConstruct(T* buf, const T& elem) {
-        new (buf) T(elem);
-    }
 };
 
 } // namespace cstl
