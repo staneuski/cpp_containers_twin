@@ -132,22 +132,17 @@ TEST(Vector, SaveConstuct) {
             },
             std::runtime_error
         );
+        ASSERT_EQ(Obj::num_copied, SIZE/2);
         ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE);
     }
 
     Obj::ResetCounters();
     {
         Vector<Obj> v(SIZE);
+        v[SIZE - 1].throw_on_copy = true;
+        v.Reserve(SIZE * 2);
 
-        ASSERT_THROW(
-            {
-                v[SIZE - 1].throw_on_copy = true;
-                v.Reserve(SIZE * 2);
-            },
-            std::runtime_error
-        );
-
-        ASSERT_EQ(v.Capacity(), SIZE);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(v.Size(), SIZE);
         ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE);
     }
