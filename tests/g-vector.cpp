@@ -4,6 +4,31 @@
 
 namespace {
 
+// Магическое число, используемое для отслеживания живости объекта
+inline const uint32_t DEFAULT_COOKIE = 0xdeadbeef;
+
+struct TestObj {
+    TestObj() = default;
+
+    TestObj(const TestObj& other) = default;
+
+    TestObj& operator=(const TestObj& other) = default;
+
+    TestObj(TestObj&& other) = default;
+
+    TestObj& operator=(TestObj&& other) = default;
+
+    ~TestObj() {
+        cookie = 0;
+    }
+
+    [[nodiscard]] bool IsAlive() const noexcept {
+        return cookie == DEFAULT_COOKIE;
+    }
+
+    uint32_t cookie = DEFAULT_COOKIE;
+};
+
 struct Obj {
     Obj() {
         if (default_construction_throw_countdown > 0)
@@ -236,6 +261,33 @@ TEST(Vector, CopyAndMove) {
         v_small[MEDIUM_SIZE - 1].id = ID;
         ASSERT_EQ(Obj::num_copied - num_copies, MEDIUM_SIZE - (MEDIUM_SIZE/2));
     }
+}
+
+TEST(Vector, Resize) {
+    using namespace cstl;
+
+    const size_t SIZE = 100'500;
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v;
+        v.Resize(SIZE);
+        ASSERT_EQ(v.Size(), SIZE);
+        ASSERT_EQ(v.Capacity(), SIZE);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+    }
+    ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
+
+    {
+        const size_t NEW_SIZE = 10'000;
+        Obj::ResetCounters();
+        Vector<Obj> v(SIZE);
+        v.Resize(NEW_SIZE);
+        ASSERT_EQ(v.Size(), NEW_SIZE);
+        ASSERT_EQ(v.Capacity(), SIZE);
+        ASSERT_EQ(Obj::num_destroyed, SIZE - NEW_SIZE);
+    }
+    ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
 }
 
 int main(int argc, char **argv) {

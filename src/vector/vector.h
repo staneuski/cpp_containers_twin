@@ -191,6 +191,16 @@ public:
         data_.Swap(new_data);
     }
 
+    void Resize(size_t new_size) {
+        Reserve(new_size);
+
+        if (size_ < new_size)
+            std::uninitialized_value_construct_n(data_ + size_, new_size - size_);
+        else
+            std::destroy_n(data_ + new_size, size_ - new_size);
+        size_ = new_size;
+    }
+
 private:
     RawMemory<T> data_;
     size_t size_ = 0;
