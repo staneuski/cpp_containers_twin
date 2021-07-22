@@ -201,6 +201,22 @@ public:
         size_ = new_size;
     }
 
+    void PushBack(const T& value) {
+        if (size_ == Capacity())
+            Reserve(size_ == 0 ? 1 : 2*size_);
+
+        new (data_ + size_) T(value);
+        ++size_;
+    }
+
+    void PushBack(T&& value) {
+        if (size_ == Capacity())
+            Reserve(size_ == 0 ? 1 : 2*size_);
+
+        new (data_ + size_) T(std::move(value));
+        ++size_;
+    }
+
 private:
     RawMemory<T> data_;
     size_t size_ = 0;

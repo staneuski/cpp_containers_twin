@@ -290,6 +290,41 @@ TEST(Vector, Resize) {
     ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
 }
 
+TEST(Vector, PushBack) {
+    using namespace cstl;
+
+    const size_t ID = 42;
+    const size_t SIZE = 100'500;
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v(SIZE);
+        Obj o{ID};
+        v.PushBack(o);
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(v[SIZE].id, ID);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::num_copied, 1);
+        ASSERT_EQ(Obj::num_constructed_with_id, 1);
+        ASSERT_EQ(Obj::num_moved, SIZE);
+    }
+    ASSERT_EQ(Obj::GetAliveObjectCount(), 0);
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v(SIZE);
+        v.PushBack(Obj{ID});
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(),SIZE * 2);
+        ASSERT_EQ(v[SIZE].id, ID);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_constructed_with_id, 1);
+        ASSERT_EQ(Obj::num_moved, SIZE + 1);
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
