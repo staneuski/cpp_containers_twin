@@ -18,7 +18,7 @@ struct Obj {
         ++num_copied;
     }
 
-    Obj(Obj&& /*other*/) noexcept {
+    Obj(Obj&&) noexcept {
         ++num_moved;
     }
 
