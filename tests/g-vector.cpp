@@ -448,7 +448,7 @@ TEST(Vector, Insert) {
         Obj obj{1};
         Vector<Obj>::iterator pos = v.Insert(v.cbegin() + 1, obj);
         ASSERT_EQ(v.Size(), SIZE + 1);
-        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(&*pos, &v[1]);
         ASSERT_EQ(v[1].id, obj.id);
         ASSERT_EQ(Obj::num_copied, 1);
@@ -460,7 +460,7 @@ TEST(Vector, Insert) {
         Vector<Obj> v{SIZE};
         Vector<Obj>::iterator pos = v.Insert(v.cbegin() + 1, Obj{1});
         ASSERT_EQ(v.Size(), SIZE + 1);
-        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
         ASSERT_EQ(&*pos, &v[1]);
         ASSERT_EQ(v[1].id, 1);
         ASSERT_EQ(Obj::num_copied, 0);
@@ -503,6 +503,116 @@ TEST(Vector, Erase) {
     ASSERT_EQ(Obj::num_move_assigned, SIZE - 2);
     ASSERT_EQ(Obj::num_moved, 0);
     ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE - 1);
+}
+
+TEST(Vector, Emplace) {
+    using namespace cstl;
+    using namespace std::literals;
+
+    const size_t SIZE = 10;
+    const int ID = 42;
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v;
+        auto* pos = v.Emplace(v.end(), Obj{1});
+        ASSERT_EQ(v.Size(), 1);
+        ASSERT_GE(v.Capacity(), v.Size());
+        ASSERT_EQ(&*pos, &v[0]);
+        ASSERT_EQ(Obj::num_moved, 1);
+        ASSERT_EQ(Obj::num_constructed_with_id, 1);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_assigned, 0);
+        ASSERT_EQ(Obj::num_move_assigned, 0);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), 1);
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v;
+        v.Reserve(SIZE);
+        auto* pos = v.Emplace(v.end(), Obj{1});
+        ASSERT_EQ(v.Size(), 1);
+        ASSERT_GE(v.Capacity(), v.Size());
+        ASSERT_EQ(&*pos, &v[0]);
+        ASSERT_EQ(Obj::num_moved, 1);
+        ASSERT_EQ(Obj::num_constructed_with_id, 1);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_assigned, 0);
+        ASSERT_EQ(Obj::num_move_assigned, 0);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), 1);
+    }
+    {
+        Vector<TestObj> v{SIZE};
+        v.Emplace(v.cbegin() + 2, std::move(v[0]));
+        ASSERT_TRUE(std::all_of(v.begin(), v.end(), [](const TestObj& obj) {
+            return obj.IsAlive();
+        }));
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        auto* pos = v.Emplace(v.cbegin() + 1, ID, "Ivan"s);
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
+        ASSERT_EQ(&*pos, &v[1]);
+        ASSERT_EQ(v[1].id, ID);
+        ASSERT_EQ(v[1].name, "Ivan"s);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::num_moved, SIZE);
+        ASSERT_EQ(Obj::num_move_assigned, 0);
+        ASSERT_EQ(Obj::num_assigned, 0);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE + 1);
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        auto* pos = v.Emplace(v.cbegin() + v.Size(), ID, "Ivan"s);
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(), SIZE*2);
+        ASSERT_EQ(&*pos, &v[SIZE]);
+        ASSERT_EQ(v[SIZE].id, ID);
+        ASSERT_EQ(v[SIZE].name, "Ivan"s);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::num_moved, SIZE);
+        ASSERT_EQ(Obj::num_move_assigned, 0);
+        ASSERT_EQ(Obj::num_assigned, 0);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE + 1);
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        v.Reserve(SIZE*2);
+        const int old_num_moved = Obj::num_moved;
+        ASSERT_EQ(v.Capacity(), SIZE*2);
+        auto* pos = v.Emplace(v.cbegin() + 3, ID, "Ivan"s);
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(&*pos, &v[3]);
+        ASSERT_EQ(v[3].id, ID);
+        ASSERT_EQ(v[3].name, "Ivan");
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::num_constructed_with_id_and_name, 1);
+        ASSERT_EQ(Obj::num_moved, old_num_moved + 1);
+        ASSERT_EQ(Obj::num_move_assigned, SIZE - 3);
+        ASSERT_EQ(Obj::num_assigned, 0);
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        v[2].id = ID;
+        auto* pos = v.Erase(v.cbegin() + 1);
+        ASSERT_EQ((pos - v.begin()), 1);
+        ASSERT_EQ(v.Size(), SIZE - 1);
+        ASSERT_EQ(v.Capacity(), SIZE);
+        ASSERT_EQ(pos->id, ID);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_assigned, 0);
+        ASSERT_EQ(Obj::num_move_assigned, SIZE - 2);
+        ASSERT_EQ(Obj::num_moved, 0);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE - 1);
+    }
 }
 
 int main(int argc, char **argv) {
