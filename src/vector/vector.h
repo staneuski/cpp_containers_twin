@@ -190,7 +190,6 @@ public:
         if (size_ == Capacity()) {
             RawMemory<T> new_data(size_ == 0 ? 1 : 2*size_);
             new (new_data + size_) T(value);
-
             UninitializedCopyOrMove(std::move(new_data));
         } else {
             new (data_ + size_) T(value);
@@ -202,12 +201,23 @@ public:
         if (size_ == Capacity()) {
             RawMemory<T> new_data(size_ == 0 ? 1 : 2*size_);
             new (new_data + size_) T(std::move(value));
-
             UninitializedCopyOrMove(std::move(new_data));
         } else {
             new (data_ + size_) T(std::move(value));
         }
         ++size_;
+    }
+
+    template <typename... Args>
+    T& EmplaceBack(Args&&... args) {
+        if (size_ == Capacity()) {
+            RawMemory<T> new_data(size_ == 0 ? 1 : 2*size_);
+            new (new_data + size_) T(std::forward<Args>(args)...);
+            UninitializedCopyOrMove(std::move(new_data));
+        } else {
+            new (data_ + size_) T(std::forward<Args>(args)...);
+        }
+        return data_[size_++];
     }
 
     void PopBack() {
@@ -221,7 +231,7 @@ private:
 
     void UninitializedCopyOrMove(RawMemory<T>&& new_data) {
         if constexpr (std::is_nothrow_move_constructible_v<T>
-                    || !std::is_copy_constructible_v<T>)
+                      || !std::is_copy_constructible_v<T>)
             std::uninitialized_move_n(
                 data_.GetAddress(),
                 size_,
