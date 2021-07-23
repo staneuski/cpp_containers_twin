@@ -399,6 +399,26 @@ TEST(Vector, EmplaceBack) {
     }
 }
 
+TEST(Vector, Iterators) {
+    using namespace cstl;
+    using namespace std::literals;
+
+    const size_t SIZE = 10;
+
+    Obj::ResetCounters();
+    Vector<int> v(SIZE);
+    const auto& cv(v);
+    v.PushBack(1);
+    ASSERT_EQ(&*v.begin(), &v[0]);
+    *v.begin() = 2;
+    ASSERT_EQ(v[0], 2);
+    ASSERT_EQ(v.end() - v.begin(), static_cast<std::ptrdiff_t>(v.Size()));
+    ASSERT_EQ(v.begin(), cv.begin());
+    ASSERT_EQ(v.end(), cv.end());
+    ASSERT_EQ(v.cbegin(), cv.begin());
+    ASSERT_EQ(v.cend(), cv.end());
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

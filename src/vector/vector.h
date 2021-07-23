@@ -91,6 +91,10 @@ private:
 template <typename T>
 class Vector {
 public:
+    using iterator = T*;
+    using const_iterator = const T*;
+
+public:
     Vector() = default;
 
     explicit Vector(const size_t size)
@@ -155,6 +159,30 @@ public:
         return data_[index];
     }
 
+    iterator begin() noexcept {
+        return data_.GetAddress();
+    }
+
+    iterator end() noexcept {
+        return data_.GetAddress() + size_;
+    }
+
+    const_iterator begin() const noexcept {
+        return data_.GetAddress();
+    }
+
+    const_iterator end() const noexcept {
+        return data_.GetAddress() + size_;
+    }
+
+    const_iterator cbegin() const noexcept {
+        return data_.GetAddress();
+    }
+
+    const_iterator cend() const noexcept {
+        return data_.GetAddress() + size_;
+    }
+
     void Swap(Vector& other) noexcept {
         data_.Swap(other.data_);
         std::swap(size_, other.size_);
@@ -208,6 +236,11 @@ public:
         ++size_;
     }
 
+    void PopBack() {
+        std::destroy_at(data_ + size_ - 1);
+        --size_;
+    }
+
     template <typename... Args>
     T& EmplaceBack(Args&&... args) {
         if (size_ == Capacity()) {
@@ -218,11 +251,6 @@ public:
             new (data_ + size_) T(std::forward<Args>(args)...);
         }
         return data_[size_++];
-    }
-
-    void PopBack() {
-        std::destroy_at(data_ + size_ - 1);
-        --size_;
     }
 
 private:
