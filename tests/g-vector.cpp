@@ -419,6 +419,53 @@ TEST(Vector, Iterators) {
     ASSERT_EQ(v.cend(), cv.end());
 }
 
+TEST(Vector, Insert) {
+    using namespace cstl;
+    using namespace std::literals;
+
+    const size_t SIZE = 10;
+
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        Obj obj{1};
+        Vector<Obj>::iterator pos = v.Insert(v.cbegin() + 1, obj);
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(&*pos, &v[1]);
+        ASSERT_EQ(v[1].id, obj.id);
+        ASSERT_EQ(Obj::num_copied, 1);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE + 2);
+    }
+    {
+        Obj::ResetCounters();
+        Vector<Obj> v{SIZE};
+        Vector<Obj>::iterator pos = v.Insert(v.cbegin() + 1, Obj{1});
+        ASSERT_EQ(v.Size(), SIZE + 1);
+        ASSERT_EQ(v.Capacity(), SIZE * 2);
+        ASSERT_EQ(&*pos, &v[1]);
+        ASSERT_EQ(v[1].id, 1);
+        ASSERT_EQ(Obj::num_copied, 0);
+        ASSERT_EQ(Obj::num_default_constructed, SIZE);
+        ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE + 1);
+    }
+    {
+        Vector<TestObj> v{SIZE};
+        v.Insert(v.cbegin() + 2, v[0]);
+        ASSERT_TRUE(std::all_of(v.begin(), v.end(), [](const TestObj& obj) {
+            return obj.IsAlive();
+        }));
+    }
+    {
+        Vector<TestObj> v{SIZE};
+        v.Insert(v.cbegin() + 2, std::move(v[0]));
+        ASSERT_TRUE(std::all_of(v.begin(), v.end(), [](const TestObj& obj) {
+            return obj.IsAlive();
+        }));
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
