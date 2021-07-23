@@ -8,22 +8,26 @@ struct C {
     C() noexcept {
         ++def_ctor;
     }
+
     C(const C&) noexcept {
         ++copy_ctor;
     }
+
     C(C&&) noexcept {
         ++move_ctor;
     }
+
     C& operator=(const C& other) noexcept {
-        if (this != &other) {
+        if (this != &other)
             ++copy_assign;
-        }
         return *this;
     }
+
     C& operator=(C&&) noexcept {
         ++move_assign;
         return *this;
     }
+
     ~C() {
         ++dtor;
     }
@@ -189,6 +193,27 @@ TEST(Optional, Reset) {
         ASSERT_TRUE(!o.HasValue());
     }
 }
+
+TEST(Optional, Emplace) {
+    struct S {
+        S(int i, std::unique_ptr<int>&& p) : i(i), p(std::move(p)) {}
+
+        int i;
+        std::unique_ptr<int> p;
+    };
+
+    Optional<S> o;
+    o.Emplace(1, std::make_unique<int>(2));
+    ASSERT_TRUE(o.HasValue());
+    ASSERT_EQ(o->i, 1);
+    ASSERT_EQ(*(o->p), 2);
+
+    o.Emplace(3, std::make_unique<int>(4));
+    ASSERT_TRUE(o.HasValue());
+    ASSERT_EQ(o->i, 3);
+    ASSERT_EQ(*(o->p), 4);
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
