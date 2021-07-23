@@ -4,7 +4,7 @@
 
 namespace {
 
-// Магическое число, используемое для отслеживания живости объекта
+// "Магическое" число, используемое для отслеживания живости объекта
 inline const uint32_t DEFAULT_COOKIE = 0xdeadbeef;
 
 struct TestObj {
@@ -42,7 +42,7 @@ struct Obj {
         ++num_constructed_with_id;
     }
 
-    Obj(int id, std::string name) : id(id) , name(std::move(name)) {
+    Obj(int id, std::string name) : id(id), name(std::move(name)) {
         ++num_constructed_with_id_and_name;
     }
 
@@ -56,8 +56,21 @@ struct Obj {
         ++num_moved;
     }
 
-    Obj& operator=(const Obj& other) = default;
-    Obj& operator=(Obj&& other) = default;
+    Obj& operator=(const Obj& other) {
+        if (this != &other) {
+            id = other.id;
+            name = other.name;
+            ++num_assigned;
+        }
+        return *this;
+    }
+
+    Obj& operator=(Obj&& other) noexcept {
+        id = other.id;
+        name = std::move(other.name);
+        ++num_move_assigned;
+        return *this;
+    }
 
     ~Obj() {
         ++num_destroyed;
@@ -81,6 +94,8 @@ struct Obj {
         num_destroyed = 0;
         num_constructed_with_id = 0;
         num_constructed_with_id_and_name = 0;
+        num_assigned = 0;
+        num_move_assigned = 0;
     }
 
     bool throw_on_copy = false;
@@ -94,6 +109,8 @@ struct Obj {
     static inline int num_copied = 0;
     static inline int num_moved = 0;
     static inline int num_destroyed = 0;
+    static inline int num_assigned = 0;
+    static inline int num_move_assigned = 0;
 };
 
 }  // namespace
@@ -464,6 +481,28 @@ TEST(Vector, Insert) {
             return obj.IsAlive();
         }));
     }
+}
+
+TEST(Vector, Erase) {
+    using namespace cstl;
+
+    const size_t SIZE = 10;
+    const int ID = 42;
+
+    Obj::ResetCounters();
+    Vector<Obj> v{SIZE};
+    v[2].id = ID;
+    auto* pos = v.Erase(v.cbegin() + 1);
+
+    ASSERT_EQ((pos - v.begin()), 1);
+    ASSERT_EQ(v.Size(), SIZE - 1);
+    ASSERT_EQ(v.Capacity(), SIZE);
+    ASSERT_EQ(pos->id, ID);
+    ASSERT_EQ(Obj::num_copied, 0);
+    ASSERT_EQ(Obj::num_assigned, 0);
+    ASSERT_EQ(Obj::num_move_assigned, SIZE - 2);
+    ASSERT_EQ(Obj::num_moved, 0);
+    ASSERT_EQ(Obj::GetAliveObjectCount(), SIZE - 1);
 }
 
 int main(int argc, char **argv) {

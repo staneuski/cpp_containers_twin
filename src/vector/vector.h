@@ -275,7 +275,7 @@ public:
         }
 
         ++size_;
-        return &data_[index];
+        return std::next(begin(), index);
     }
 
     iterator Insert(const_iterator pos, T&& value) {
@@ -313,12 +313,25 @@ public:
         }
 
         ++size_;
-        return &data_[index];
+        return std::next(begin(), index);
     }
 
     void PopBack() {
         std::destroy_at(data_ + size_ - 1);
         --size_;
+    }
+
+    iterator Erase(const_iterator pos) {
+        size_t index = pos - begin();
+        if (index + 1 < size_)
+            std::move(
+                data_.GetAddress() + index + 1,
+                data_.GetAddress() + size_,
+                data_.GetAddress() + index
+            );
+        PopBack();
+
+        return std::next(begin(), index);
     }
 
     template <typename... Args>
