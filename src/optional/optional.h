@@ -93,11 +93,15 @@ public:
         return is_initialized_;
     }
 
-    inline T& operator*() {
+    inline T& operator*() & {
         return *reinterpret_cast<T*>(data_);
     }
 
-    inline const T& operator*() const {
+    inline T&& operator*() && {
+        return std::move(*reinterpret_cast<T*>(data_));
+    }
+
+    inline const T& operator*() const& {
         return *reinterpret_cast<const T*>(data_);
     }
 
@@ -109,19 +113,27 @@ public:
         return reinterpret_cast<const T*>(data_);
     }
 
-    T& Value() {
+    T& Value() & {
         if (is_initialized_)
             return *reinterpret_cast<T*>(data_);
         else
             throw BadOptionalAccess();
     }
 
-    const T& Value() const {
+    T&& Value() && {
+        if (is_initialized_)
+            return std::move(*reinterpret_cast<T*>(data_));
+        else
+            throw BadOptionalAccess();
+    }
+
+    const T& Value() const& {
         if (is_initialized_)
             return *reinterpret_cast<const T*>(data_);
         else
             throw BadOptionalAccess();
     }
+
 
     void Reset() {
         if (is_initialized_) {
