@@ -216,11 +216,15 @@ public:
     }
 
     void PopBack() {
+        assert(size_);
+
         std::destroy_at(data_ + size_ - 1);
         --size_;
     }
 
     iterator Erase(const_iterator pos) {
+        assert(pos);
+
         size_t index = pos - begin();
         if (index + 1 < size_)
             std::move(
@@ -280,6 +284,8 @@ public:
 
     template <typename... Args>
     iterator Emplace(const_iterator pos, Args&&... args) {
+        assert(pos || pos == end());
+
         if (pos == end()) {
             EmplaceBack(std::move(args)...);
             return std::prev(end());
