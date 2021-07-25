@@ -1,5 +1,7 @@
 #pragma once
 
+namespace cstl {
+
 class SizeObjWrapper {
 public:
     SizeObjWrapper() noexcept = default;
@@ -17,3 +19,5 @@ private:
 inline SizeObjWrapper Reserve(size_t capacity_to_reserve) {
     return SizeObjWrapper(capacity_to_reserve);
 }
+
+} // namespace cstl

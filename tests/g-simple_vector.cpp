@@ -1,11 +1,12 @@
+#include "simple_vector/simple_vector.h"
+
 #include <cassert>
-#include <iostream>
 #include <stdexcept>
 #include <numeric>
 
 #include <gtest/gtest.h>
 
-#include "simple_vector/simple_vector.h"
+using namespace cstl;
 
 class SpecialMembersTester {
 public:
@@ -80,13 +81,7 @@ TEST(SimpleVector, initializer_list) {
 TEST(SimpleVector, At) {
     SimpleVector<int> v(3);
     ASSERT_EQ(&v.At(2), &v[2]);
-    try {
-        v.At(3);
-        assert(false);  // Ожидается выбрасывание исключения
-    } catch (const std::out_of_range&) {
-    } catch (...) {
-        assert(false);  // Не ожидается исключение, отличное от out_of_range
-    }
+    ASSERT_THROW(v.At(3), std::out_of_range);
 }
 
 // Очистка вектора

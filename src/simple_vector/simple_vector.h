@@ -2,11 +2,14 @@
 #include <algorithm>
 #include <cassert>
 #include <initializer_list>
+#include <iostream>
 #include <iterator>
 #include <stdexcept>
 
 #include "array_ptr.h"
 #include "size_obj_wrapper.h"
+
+namespace cstl {
 
 template <typename Type>
 class SimpleVector {
@@ -288,3 +291,5 @@ template <typename Type>
 bool operator>=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
     return !(lhs < rhs) || (lhs == rhs);
 }
+
+} // namespace cstl

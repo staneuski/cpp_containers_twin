@@ -1,9 +1,11 @@
+#include "single_linked_list/single_linked_list.h"
+
 #include <cassert>
 #include <stdexcept>
 
 #include <gtest/gtest.h>
 
-#include "single_linked_list/single_linked_list.h"
+using namespace cstl;
 
 // A spies that check their removal
 struct DeletionSpy {
