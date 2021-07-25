@@ -50,8 +50,3 @@ add_test(NAME simple_vector COMMAND gtest-simple_vector)
 add_executable(gtest-single_linked_list tests/g-single_linked_list.cpp ${SINGLE_LINKED_LIST})
 target_link_libraries(gtest-single_linked_list gtest_main)
 add_test(NAME single_linked_list COMMAND gtest-single_linked_list)
-
-#- src/simple_vector
-add_executable(gtest-vector tests/g-vector.cpp ${VECTOR})
-target_link_libraries(gtest-vector gtest_main)
-add_test(NAME vector COMMAND gtest-vector)
