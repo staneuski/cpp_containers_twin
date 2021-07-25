@@ -223,7 +223,7 @@ public:
     }
 
     iterator Erase(const_iterator pos) {
-        assert(pos);
+        assert(pos >= begin() && pos < end());
 
         size_t index = pos - begin();
         if (index + 1 < size_)
@@ -284,7 +284,7 @@ public:
 
     template <typename... Args>
     iterator Emplace(const_iterator pos, Args&&... args) {
-        assert(pos || pos == end());
+        assert(pos >= begin() && pos <= end());
 
         if (pos == end()) {
             EmplaceBack(std::move(args)...);
@@ -292,7 +292,6 @@ public:
         }
 
         size_t index = pos - begin();
-
         if (size_ == Capacity()) {
             RawMemory<T> new_data(size_ == 0 ? 1 : 2*size_);
             new (new_data + index) T(std::forward<Args>(args)...);
