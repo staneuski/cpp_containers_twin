@@ -3,7 +3,7 @@ project(custom_stl VERSION 0.1.3)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set(CMAKE_CXX_FLAGS_DEBUG -fsanitize=address)
 
@@ -35,6 +35,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 enable_testing()
+
+#- src/matrix
+# add_executable(gtest-matrix tests/g-matrix.cpp ${OPTIONAL})
+# target_link_libraries(gtest-matrix gtest_main)
+# add_test(NAME matrix COMMAND gtest-matrix)
 
 #- src/optional
 add_executable(gtest-optional tests/g-optional.cpp ${OPTIONAL})
